@@ -5,7 +5,8 @@ import warnings
 import os
 from torch import nn
 import torch
-import parser
+#import parser
+import ast
 from .splines import spline, Spline
 
 
@@ -350,9 +351,22 @@ def _get_input_features_for_functional_expression(functional_expression : str, f
         input_features: list
             List of feature names that appear as input in functional_expression. here in the example ["x1","x2"].
     '''
+
+    # old version (python <3.10):
     # co names are local variables of functions in a python expression
-    co_names = parser.expr(functional_expression).compile().co_names
+    #co_names = parser.expr(functional_expression).compile().co_names
+    #co_names_set = set(co_names)
+    #input_features = list(co_names_set.intersection(set(feature_names)))
+
+    #rewritten for the ast module; strong help by Github Copilot; manually checked and commented
+    co_names = ast.parse(functional_expression).body[0].value
+    # parse creates an AST node, where "body" is a list of its "statements". For us, the first statement is the relevant one because we only parse a single expression.
+    #value retrieves the expression itself, which is assumed to be a function call (Copilot claims it can also be a list)
+
+    co_names = [arg.id for arg in co_names.args if isinstance(arg, ast.Name)]
     co_names_set = set(co_names)
+
+    # intersect with feature names to get the input features
     input_features = list(co_names_set.intersection(set(feature_names)))
     return input_features
 
