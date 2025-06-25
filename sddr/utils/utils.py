@@ -361,9 +361,12 @@ def _get_input_features_for_functional_expression(functional_expression : str, f
     #rewritten for the ast module; strong help by Github Copilot; manually checked and commented
     co_names = ast.parse(functional_expression).body[0].value
     # parse creates an AST node, where "body" is a list of its "statements". For us, the first statement is the relevant one because we only parse a single expression.
-    #value retrieves the expression itself, which is assumed to be a function call (Copilot claims it can also be a list)
+    
 
-    co_names = [arg.id for arg in co_names.args if isinstance(arg, ast.Name)]
+    co_names = [node.id for node in ast.walk(co_names) if isinstance(node, ast.Name)]
+
+
+
     co_names_set = set(co_names)
 
     # intersect with feature names to get the input features
